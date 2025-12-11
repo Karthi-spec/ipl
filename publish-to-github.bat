@@ -1,95 +1,74 @@
 @echo off
-title Publish IPL Auction Game to GitHub
+title IPL Auction - GitHub Setup
 color 0A
 
 echo.
-echo  ██████╗ ██╗████████╗██╗  ██╗██╗   ██╗██████╗ 
-echo ██╔════╝ ██║╚══██╔══╝██║  ██║██║   ██║██╔══██╗
-echo ██║  ███╗██║   ██║   ███████║██║   ██║██████╔╝
-echo ██║   ██║██║   ██║   ██╔══██║██║   ██║██╔══██╗
-echo ╚██████╔╝██║   ██║   ██║  ██║╚██████╔╝██████╔╝
-echo  ╚═════╝ ╚═╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝ ╚═════╝ 
+echo ================================================================================
+echo                    IPL AUCTION GAME - GITHUB SETUP
+echo ================================================================================
 echo.
-echo                🏏 PUBLISH TO GITHUB 🏏
+
+echo STEP 1: Install GitHub Desktop (Easiest Way)
+echo.
+echo 1. Download GitHub Desktop: https://desktop.github.com/
+echo 2. Install and sign in with your GitHub account
+echo 3. This will automatically install Git for you
 echo.
 echo ================================================================================
 echo.
 
-REM Check if Git is installed
-git --version >nul 2>&1
-if %errorlevel% neq 0 (
-    echo ❌ Git is not installed!
-    echo.
-    echo 📥 Please install Git first:
-    echo    Option 1: Download from https://git-scm.com/download/win
-    echo    Option 2: Install GitHub Desktop from https://desktop.github.com/
-    echo.
-    pause
-    exit /b 1
-)
-
-echo ✅ Git is installed
+echo STEP 2: Create Repository on GitHub
 echo.
-
-REM Check if this is a git repository
-if not exist ".git" (
-    echo 📁 Initializing Git repository...
-    git init
-    echo ✅ Git repository initialized
-    echo.
-)
-
-echo 📋 Adding all files to Git...
-git add .
-
-echo.
-echo 💬 Creating commit...
-git commit -m "🏏 IPL Auction Game - Complete System with GitHub Pages Support"
-
-if %errorlevel% neq 0 (
-    echo ⚠️  No changes to commit or commit failed
-    echo.
-)
-
-echo.
-echo 🌐 Repository Status:
-git status --porcelain
-if %errorlevel% equ 0 (
-    echo ✅ Repository is clean
-) else (
-    echo ⚠️  There might be uncommitted changes
-)
-
+echo 1. Go to: https://github.com
+echo 2. Click "New repository" (green button)
+echo 3. Repository name: ipl-auction-game
+echo 4. Description: IPL Auction Game with Real-time Bidding
+echo 5. Make it PUBLIC
+echo 6. Do NOT check "Add a README file"
+echo 7. Click "Create repository"
 echo.
 echo ================================================================================
-echo                           📤 PUSH TO GITHUB
-echo ================================================================================
 echo.
-echo 🔗 To push to GitHub, you need to:
+
+echo STEP 3: Add Project to GitHub Desktop
 echo.
-echo 1️⃣  Create a repository on GitHub.com:
-echo     - Go to https://github.com
-echo     - Click "New repository"
-echo     - Name: ipl-auction-game
-echo     - Make it Public
-echo     - Don't initialize with README
-echo.
-echo 2️⃣  Add the remote and push:
-echo     git remote add origin https://github.com/YOUR_USERNAME/ipl-auction-game.git
-echo     git branch -M main
-echo     git push -u origin main
-echo.
-echo 3️⃣  Enable GitHub Pages:
-echo     - Go to repository Settings
-echo     - Scroll to Pages section
-echo     - Source: GitHub Actions
-echo     - Save
-echo.
-echo ✨ Your game will be live at: https://YOUR_USERNAME.github.io/ipl-auction-game
+echo 1. Open GitHub Desktop
+echo 2. Click "Add an Existing Repository from your hard drive"
+echo 3. Browse and select this folder: %CD%
+echo 4. Click "Add Repository"
 echo.
 echo ================================================================================
-echo                           🎉 READY TO PUBLISH! 🎉
+echo.
+
+echo STEP 4: Publish to GitHub
+echo.
+echo 1. In GitHub Desktop, you'll see all your files
+echo 2. Add commit message: "IPL Auction Game - Complete System"
+echo 3. Click "Commit to main"
+echo 4. Click "Publish repository"
+echo 5. Repository name: ipl-auction-game
+echo 6. Keep it public
+echo 7. Click "Publish Repository"
+echo.
 echo ================================================================================
+echo.
+
+echo STEP 5: Enable GitHub Pages
+echo.
+echo 1. Go to your repository on GitHub.com
+echo 2. Click Settings tab
+echo 3. Scroll down to Pages section
+echo 4. Source: GitHub Actions
+echo 5. Click Save
+echo.
+echo Your game will be live at: https://YOUR_USERNAME.github.io/ipl-auction-game
+echo.
+echo ================================================================================
+echo                              ALL DONE!
+echo ================================================================================
+echo.
+echo The workflow is now fixed and ready for GitHub Pages deployment.
+echo No more Vercel errors - clean GitHub-only setup!
 echo.
 
 pause
