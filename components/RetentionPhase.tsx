@@ -1,9 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Heart, ArrowLeft, Check, X, Users, Crown, Search } from 'lucide-react'
 import { useAuctionStore } from '@/store/auctionStore'
+import { useRoomStore } from '@/store/roomStore'
+import { socketClient } from '@/utils/socketClient'
 import { getPlayerImage, handleImageError } from '@/utils/playerImage'
 
 
@@ -35,6 +37,52 @@ export default function RetentionPhase({ onBack, userRole = 'admin', userTeam }:
 
   // Get selected team object for theming
   const selectedTeamObj = teams.find(t => t.name === selectedTeam)
+
+  // Connect to room when component mounts
+  useEffect(() => {
+    const { currentRoom } = useRoomStore.getState()
+    if (currentRoom && socketClient.isConnected()) {
+      const role = userRole || 'team'
+      socketClient.joinRoom(currentRoom.id, role, userTeam || undefined)
+      console.log(`Connected to retention phase room: ${currentRoom.id} as ${role}`)
+    }
+  }, [userRole, userTeam])
+
+  // Listen for room ended event
+  useEffect(() => {
+    const handleRoomEnded = (data: { roomId: string; message: string }) => {
+      const { currentRoom, endRoom } = useRoomStore.getState()
+      
+      if (currentRoom && currentRoom.id === data.roomId) {
+        // Show notification with better styling
+        const notification = document.createElement('div')
+        notification.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-red-500 text-white px-6 py-4 rounded-xl font-bold shadow-2xl'
+        notification.textContent = data.message
+        document.body.appendChild(notification)
+        
+        // Remove notification after 3 seconds
+        setTimeout(() => {
+          document.body.removeChild(notification)
+        }, 3000)
+        
+        // End room locally
+        endRoom()
+        
+        // Redirect back to room selection
+        onBack()
+      }
+    }
+
+    socketClient.onRoomEnded(handleRoomEnded)
+
+    return () => {
+      // Clean up listener
+      const socket = socketClient.getSocket()
+      if (socket) {
+        socket.off('room-ended', handleRoomEnded)
+      }
+    }
+  }, [onBack])
 
   // Get all available players in the pool (for retention selection)
   const getAvailablePlayersForRetention = () => {

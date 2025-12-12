@@ -67,6 +67,11 @@ export default function AuctionRoom({ onBack, selectedTeam: userSelectedTeam, is
     try {
       const result = await joinRoomWithRole(currentRoom.id, role)
       
+      // Connect to room via socket
+      if (socketClient.isConnected()) {
+        socketClient.joinRoom(currentRoom.id, result.actualRole, teamName)
+      }
+      
       // Use the actual role returned (in case admin was converted to spectator)
       setUserRole(result.actualRole)
       setShowRoleSelection(false)
@@ -93,6 +98,15 @@ export default function AuctionRoom({ onBack, selectedTeam: userSelectedTeam, is
       setSelectedTeam(userSelectedTeam)
     }
   }, [userSelectedTeam])
+
+  // Connect to room when component mounts with existing role
+  useEffect(() => {
+    if (currentRoom && socketClient.isConnected() && (userSelectedTeam || isSpectator)) {
+      const role = isSpectator ? 'spectator' : 'team'
+      socketClient.joinRoom(currentRoom.id, role, userSelectedTeam || undefined)
+      console.log(`Connected to room: ${currentRoom.id} as ${role}`)
+    }
+  }, [currentRoom, userSelectedTeam, isSpectator])
 
 
 
@@ -128,6 +142,42 @@ export default function AuctionRoom({ onBack, selectedTeam: userSelectedTeam, is
       }
     }
   }, [])
+
+  // Listen for room ended event
+  useEffect(() => {
+    const handleRoomEnded = (data: { roomId: string; message: string }) => {
+      const { currentRoom, endRoom } = useRoomStore.getState()
+      
+      if (currentRoom && currentRoom.id === data.roomId) {
+        // Show notification with better styling
+        const notification = document.createElement('div')
+        notification.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-red-500 text-white px-6 py-4 rounded-xl font-bold shadow-2xl'
+        notification.textContent = data.message
+        document.body.appendChild(notification)
+        
+        // Remove notification after 3 seconds
+        setTimeout(() => {
+          document.body.removeChild(notification)
+        }, 3000)
+        
+        // End room locally
+        endRoom()
+        
+        // Redirect back to room selection
+        onBack()
+      }
+    }
+
+    socketClient.onRoomEnded(handleRoomEnded)
+
+    return () => {
+      // Clean up listener
+      const socket = socketClient.getSocket()
+      if (socket) {
+        socket.off('room-ended', handleRoomEnded)
+      }
+    }
+  }, [onBack])
 
 
 
@@ -195,7 +245,7 @@ export default function AuctionRoom({ onBack, selectedTeam: userSelectedTeam, is
         </button>
 
         <div className="flex items-center gap-6">
-          {selectedTeam && (
+          {selectedTeam && userRole === 'team' && (
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -214,7 +264,7 @@ export default function AuctionRoom({ onBack, selectedTeam: userSelectedTeam, is
                     )}
                     <div className="text-left">
                       <div className="font-bold text-blue-400 flex items-center gap-2">
-                        Squad Management
+                        My Squad
                         {squadSize > 0 && (
                           <span className="bg-blue-500/20 text-blue-400 px-2 py-1 rounded-full text-xs">
                             {squadSize}
@@ -228,6 +278,29 @@ export default function AuctionRoom({ onBack, selectedTeam: userSelectedTeam, is
               })()}
             </motion.button>
           )}
+          
+          {/* Role indicator */}
+          {userRole && (
+            <div className={`glass-effect px-4 py-2 rounded-xl flex items-center gap-2 ${
+              userRole === 'admin' ? 'border border-red-500/30' :
+              userRole === 'team' ? 'border border-blue-500/30' :
+              'border border-purple-500/30'
+            }`}>
+              <div className={`w-2 h-2 rounded-full ${
+                userRole === 'admin' ? 'bg-red-400' :
+                userRole === 'team' ? 'bg-blue-400' :
+                'bg-purple-400'
+              }`} />
+              <span className={`font-bold text-sm ${
+                userRole === 'admin' ? 'text-red-400' :
+                userRole === 'team' ? 'text-blue-400' :
+                'text-purple-400'
+              }`}>
+                {userRole.toUpperCase()}
+                {userRole === 'team' && selectedTeam && ` - ${selectedTeam}`}
+              </span>
+            </div>
+          )}
           <div className="glass-effect px-6 py-3 rounded-xl flex items-center gap-2">
             <Users className="w-5 h-5 text-gray-400" />
             <span className="font-bold">{teams.length} Teams</span>
@@ -238,9 +311,9 @@ export default function AuctionRoom({ onBack, selectedTeam: userSelectedTeam, is
       {/* Teams Connection Bar */}
       <TeamsConnectionBar />
 
-      {/* Squad Management Modal */}
+      {/* Squad Management Modal - Only for team owners */}
       <AnimatePresence>
-        {showSquadManager && selectedTeam && (
+        {showSquadManager && selectedTeam && userRole === 'team' && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -269,9 +342,10 @@ export default function AuctionRoom({ onBack, selectedTeam: userSelectedTeam, is
                   })()}
                   <div>
                     <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent">
-                      Squad Management
+                      My Squad
                     </h1>
                     <p className="text-gray-400">{selectedTeam}</p>
+                    <p className="text-xs text-blue-400">Team Owner View</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -323,6 +397,8 @@ export default function AuctionRoom({ onBack, selectedTeam: userSelectedTeam, is
                   selectedTeam={selectedTeam}
                   onTeamSelect={setSelectedTeam}
                   isTeamLocked={!!userSelectedTeam}
+                  userRole={userRole}
+                  allowTeamSelection={!userSelectedTeam && userRole !== 'admin'}
                 />
               )}
             </>

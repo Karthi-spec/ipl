@@ -11,9 +11,17 @@ interface BiddingPanelProps {
   selectedTeam: string
   onTeamSelect: (team: string) => void
   isTeamLocked?: boolean
+  userRole?: 'admin' | 'team' | 'spectator' | null
+  allowTeamSelection?: boolean
 }
 
-export default function BiddingPanel({ selectedTeam, onTeamSelect, isTeamLocked = false }: BiddingPanelProps) {
+export default function BiddingPanel({ 
+  selectedTeam, 
+  onTeamSelect, 
+  isTeamLocked = false, 
+  userRole = null,
+  allowTeamSelection = true 
+}: BiddingPanelProps) {
   const { 
     currentPlayer, 
     teams, 
@@ -316,47 +324,79 @@ export default function BiddingPanel({ selectedTeam, onTeamSelect, isTeamLocked 
         Place Your Bid
       </h3>
 
-      {/* Team Selection */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-2">
-          <label className="block text-sm text-gray-400">
-            {isTeamLocked ? 'Your Team' : 'Select Your Team'}
-          </label>
-          {isTeamLocked && (
-            <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded">
-              Locked
-            </span>
+      {/* Team Selection - Only show if user is allowed to select teams */}
+      {(allowTeamSelection || selectedTeam) && (
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-sm text-gray-400">
+              {isTeamLocked || !allowTeamSelection ? 'Your Team' : 'Select Your Team'}
+            </label>
+            <div className="flex items-center gap-2">
+              {(isTeamLocked || !allowTeamSelection) && (
+                <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded">
+                  Locked
+                </span>
+              )}
+              {userRole && (
+                <span className={`text-xs px-2 py-1 rounded ${
+                  userRole === 'admin' ? 'bg-red-500/20 text-red-400' :
+                  userRole === 'team' ? 'bg-blue-500/20 text-blue-400' :
+                  'bg-purple-500/20 text-purple-400'
+                }`}>
+                  {userRole.toUpperCase()}
+                </span>
+              )}
+            </div>
+          </div>
+          
+          {/* Show only selected team if locked, or all teams if selection allowed */}
+          <div className="grid grid-cols-2 gap-3">
+            {teams
+              .filter(team => allowTeamSelection || team.name === selectedTeam)
+              .map((team) => (
+                <motion.button
+                  key={team.id}
+                  whileHover={(!isTeamLocked && allowTeamSelection) ? { scale: 1.02 } : {}}
+                  whileTap={(!isTeamLocked && allowTeamSelection) ? { scale: 0.98 } : {}}
+                  onClick={() => allowTeamSelection && !isTeamLocked && onTeamSelect(team.name)}
+                  disabled={!allowTeamSelection || (isTeamLocked && selectedTeam !== team.name)}
+                  className={`p-4 rounded-xl border-2 transition-all ${
+                    selectedTeam === team.name
+                      ? 'border-gold-400 bg-gold-400/20'
+                      : (!allowTeamSelection || isTeamLocked)
+                      ? 'border-white/5 bg-white/5 opacity-30 cursor-not-allowed'
+                      : 'border-white/10 bg-white/5 hover:border-white/20'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center overflow-hidden flex-shrink-0">
+                      <img src={team.logo} alt={team.name} className="w-10 h-10 object-contain" />
+                    </div>
+                    <div className="text-left flex-1 min-w-0">
+                      <div className="font-bold text-sm truncate">{team.name}</div>
+                      <div className="text-xs text-gold-400">₹{team.budget.toFixed(2)}Cr</div>
+                      {selectedTeam === team.name && (
+                        <div className="text-xs text-green-400 font-bold mt-1">YOUR TEAM</div>
+                      )}
+                    </div>
+                  </div>
+                </motion.button>
+              ))}
+          </div>
+          
+          {/* Show message if no team selected and selection not allowed */}
+          {!selectedTeam && !allowTeamSelection && (
+            <div className="text-center py-8 bg-white/5 rounded-xl border border-white/10">
+              <div className="text-gray-400 mb-2">No team assigned</div>
+              <div className="text-sm text-gray-500">
+                {userRole === 'admin' ? 'Admins cannot bid - you can only manage the auction' : 
+                 userRole === 'spectator' ? 'Spectators cannot bid - you can only watch' :
+                 'Please join as a team owner to participate in bidding'}
+              </div>
+            </div>
           )}
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          {teams.map((team) => (
-            <motion.button
-              key={team.id}
-              whileHover={isTeamLocked ? {} : { scale: 1.02 }}
-              whileTap={isTeamLocked ? {} : { scale: 0.98 }}
-              onClick={() => !isTeamLocked && onTeamSelect(team.name)}
-              disabled={isTeamLocked && selectedTeam !== team.name}
-              className={`p-4 rounded-xl border-2 transition-all ${
-                selectedTeam === team.name
-                  ? 'border-gold-400 bg-gold-400/20'
-                  : isTeamLocked
-                  ? 'border-white/5 bg-white/5 opacity-30 cursor-not-allowed'
-                  : 'border-white/10 bg-white/5 hover:border-white/20'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center overflow-hidden flex-shrink-0">
-                  <img src={team.logo} alt={team.name} className="w-10 h-10 object-contain" />
-                </div>
-                <div className="text-left flex-1 min-w-0">
-                  <div className="font-bold text-sm truncate">{team.name}</div>
-                  <div className="text-xs text-gold-400">₹{team.budget.toFixed(2)}Cr</div>
-                </div>
-              </div>
-            </motion.button>
-          ))}
-        </div>
-      </div>
+      )}
 
       {/* Current Bid Display */}
       {currentPlayer && (
@@ -473,21 +513,22 @@ export default function BiddingPanel({ selectedTeam, onTeamSelect, isTeamLocked 
         </div>
       )}
 
-      {/* Main Bid Buttons */}
-      <div className="grid grid-cols-5 gap-3 mb-6">
-        {/* Bid Button - Start at base or increment by 0.25 */}
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={currentPlayer?.currentBid === currentPlayer?.basePrice && !currentPlayer?.currentBidder ? handleBasePriceBid : handleBid}
-          disabled={!selectedTeam || !currentPlayer || currentPlayer.currentBidder === selectedTeam || rtmInProgress}
-          className="bg-green-500/20 hover:bg-green-500/30 border-2 border-green-500/50 p-6 rounded-xl font-bold text-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {currentPlayer?.currentBid === currentPlayer?.basePrice && !currentPlayer?.currentBidder
-            ? `Bid ₹${currentPlayer?.basePrice.toFixed(2)}Cr`
-            : `Bid ₹${currentPlayer ? (currentPlayer.currentBid + BID_INCREMENT).toFixed(2) : '0.00'}Cr`
-          }
-        </motion.button>
+      {/* Main Bid Buttons - Only show for team owners with selected team */}
+      {userRole === 'team' && selectedTeam ? (
+        <div className="grid grid-cols-5 gap-3 mb-6">
+          {/* Bid Button - Start at base or increment by 0.25 */}
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={currentPlayer?.currentBid === currentPlayer?.basePrice && !currentPlayer?.currentBidder ? handleBasePriceBid : handleBid}
+            disabled={!selectedTeam || !currentPlayer || currentPlayer.currentBidder === selectedTeam || rtmInProgress}
+            className="bg-green-500/20 hover:bg-green-500/30 border-2 border-green-500/50 p-6 rounded-xl font-bold text-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {currentPlayer?.currentBid === currentPlayer?.basePrice && !currentPlayer?.currentBidder
+              ? `Bid ₹${currentPlayer?.basePrice.toFixed(2)}Cr`
+              : `Bid ₹${currentPlayer ? (currentPlayer.currentBid + BID_INCREMENT).toFixed(2) : '0.00'}Cr`
+            }
+          </motion.button>
         
         {/* RTM Button - Show only if eligible and no RTM in progress */}
         {canUseRTM && !rtmInProgress ? (
@@ -537,38 +578,58 @@ export default function BiddingPanel({ selectedTeam, onTeamSelect, isTeamLocked 
           <span className="text-sm">UNDO</span>
         </motion.button>
 
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={handleNotInterested}
-          disabled={!selectedTeam || !currentPlayer || rtmInProgress}
-          className="bg-red-500/20 hover:bg-red-500/30 border-2 border-red-500/50 p-6 rounded-xl font-bold text-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Not Interested
-        </motion.button>
-      </div>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleNotInterested}
+            disabled={!selectedTeam || !currentPlayer || rtmInProgress}
+            className="bg-red-500/20 hover:bg-red-500/30 border-2 border-red-500/50 p-6 rounded-xl font-bold text-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Not Interested
+          </motion.button>
+        </div>
+      ) : (
+        /* Show message for non-team users */
+        <div className="mb-6 p-8 bg-white/5 rounded-xl border border-white/10 text-center">
+          <div className="text-2xl mb-4">
+            {userRole === 'admin' ? '⚙️' : userRole === 'spectator' ? '👁️' : '🚫'}
+          </div>
+          <div className="text-xl font-bold text-gray-400 mb-2">
+            {userRole === 'admin' ? 'Admin View' : 
+             userRole === 'spectator' ? 'Spectator Mode' : 
+             'Bidding Unavailable'}
+          </div>
+          <div className="text-sm text-gray-500">
+            {userRole === 'admin' ? 'You can manage the auction but cannot place bids' : 
+             userRole === 'spectator' ? 'You can watch the auction but cannot place bids' :
+             'Please join as a team owner to participate in bidding'}
+          </div>
+        </div>
+      )}
 
-      {/* Custom Bid */}
-      <div className="flex gap-3">
-        <input
-          type="number"
-          step="0.25"
-          value={customAmount}
-          onChange={(e) => setCustomAmount(e.target.value)}
-          placeholder="Custom amount..."
-          disabled={rtmInProgress}
-          className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-gold-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        />
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={handleCustomBid}
-          disabled={!selectedTeam || !currentPlayer || !customAmount || rtmInProgress}
-          className="gold-gradient px-8 py-3 rounded-xl font-bold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          BID
-        </motion.button>
-      </div>
+      {/* Custom Bid - Only for team owners */}
+      {userRole === 'team' && selectedTeam && (
+        <div className="flex gap-3">
+          <input
+            type="number"
+            step="0.25"
+            value={customAmount}
+            onChange={(e) => setCustomAmount(e.target.value)}
+            placeholder="Custom amount..."
+            disabled={rtmInProgress}
+            className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-gold-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          />
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleCustomBid}
+            disabled={!selectedTeam || !currentPlayer || !customAmount || rtmInProgress}
+            className="gold-gradient px-8 py-3 rounded-xl font-bold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            BID
+          </motion.button>
+        </div>
+      )}
 
       {/* Error Message Display */}
       {bidError && (

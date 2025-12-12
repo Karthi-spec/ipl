@@ -1,6 +1,15 @@
-# 🏏 IPL Auction System - Complete Web Application
+# 🏏 IPL Auction System - Global Multiplayer Game
 
-A professional, real-time IPL auction system with stunning animations, live bidding, and comprehensive admin controls.
+A professional, real-time IPL auction system with stunning animations, live bidding, and worldwide multiplayer support. Play with friends from anywhere in the world!
+
+## 🚀 Quick Deploy to GitHub Pages
+
+```bash
+# One-click deployment
+./deploy-to-github.bat
+```
+
+**Your game will be live at:** `https://YOUR_USERNAME.github.io/YOUR_REPO_NAME`
 
 ## ✨ Features
 
@@ -56,18 +65,21 @@ cp .env.example .env
 # Edit .env with your settings
 ```
 
-### 4. Deploy
+### 4. Deploy to GitHub Pages
 ```bash
-# Windows
-deploy.bat
+# Windows - One-click deployment
+./deploy-to-github.bat
 
-# Linux/Mac
-./deploy.sh
+# Manual deployment
+git add .
+git commit -m "Deploy IPL Auction Game"
+git push origin main
 ```
 
 ### 5. Access Application
-- **Local Development**: http://localhost:3000
-- **Production**: https://your-domain.com
+- **Local Development**: http://localhost:3001 (frontend) + http://localhost:3002 (backend)
+- **GitHub Pages**: https://YOUR_USERNAME.github.io/YOUR_REPO_NAME
+- **Global Access**: Share with friends worldwide!
 
 ## 📱 User Interfaces
 

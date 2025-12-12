@@ -6,7 +6,13 @@ class SocketClient {
   private maxReconnectAttempts = 5
 
   connect(serverUrl?: string) {
-    const url = serverUrl || process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001'
+    // Auto-detect production URL or use provided URL
+    const url = serverUrl || 
+                process.env.NEXT_PUBLIC_SOCKET_URL || 
+                (typeof window !== 'undefined' && window.location.hostname === 'localhost' 
+                  ? 'http://localhost:3002' 
+                  : `https://${window.location.hostname}:3002`) || 
+                'http://localhost:3002'
     
     this.socket = io(url, {
       transports: ['websocket', 'polling'],
@@ -49,7 +55,12 @@ class SocketClient {
     }
   }
 
+  joinRoom(roomId: string, type: 'admin' | 'team' | 'spectator', teamName?: string) {
+    this.socket?.emit('join-room', { roomId, type, teamName })
+  }
+
   identify(type: 'admin' | 'team' | 'spectator', teamName?: string) {
+    // Legacy method - kept for backward compatibility
     this.socket?.emit('identify', { type, teamName })
   }
 
@@ -71,6 +82,10 @@ class SocketClient {
 
   broadcastTeamAnalysis(analysisData: any) {
     this.socket?.emit('broadcast-team-analysis', analysisData)
+  }
+
+  endRoom(roomData: { roomId: string }) {
+    this.socket?.emit('end-room', roomData)
   }
 
   onAuctionStateUpdate(callback: (state: any) => void) {
@@ -95,6 +110,10 @@ class SocketClient {
 
   onTeamAnalysisShow(callback: (analysisData: any) => void) {
     this.socket?.on('show-team-analysis', callback)
+  }
+
+  onRoomEnded(callback: (data: { roomId: string; message: string }) => void) {
+    this.socket?.on('room-ended', callback)
   }
 
   disconnect() {

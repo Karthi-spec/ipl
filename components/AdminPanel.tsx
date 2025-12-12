@@ -1,11 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Play, Pause, SkipForward, Plus, Settings, Gavel, Shield, Heart, Users, List, X, Check, TrendingUp } from 'lucide-react'
 import { useAuctionStore } from '@/store/auctionStore'
+import { useRoomStore } from '@/store/roomStore'
 import { useConnectedClients } from '@/hooks/useConnectedClients'
 import { useConnectionStore } from '@/store/connectionStore'
+import { socketClient } from '@/utils/socketClient'
 
 import SoldAnimation from './SoldAnimation'
 import RTMAnimation from './RTMAnimation'
@@ -13,7 +15,9 @@ import RetainedAnimation from './RetainedAnimation'
 import UnsoldAnimation from './UnsoldAnimation'
 import ConnectedTeamsMonitor from './ConnectedTeamsMonitor'
 import EndAuctionModal from './EndAuctionModal'
+import EndRoomModal from './EndRoomModal'
 import TeamAnalysis from './TeamAnalysis'
+import FinalResults from './FinalResults'
 import AuctionTimer from './AuctionTimer'
 import { audioManager } from '@/utils/audioManager'
 
@@ -53,6 +57,7 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
 
   const { stats: connectionStats } = useConnectedClients()
   const { resetConnections } = useConnectionStore()
+  const { currentRoom, endRoom } = useRoomStore()
 
   const [showAddPlayer, setShowAddPlayer] = useState(false)
   const [showAddTeam, setShowAddTeam] = useState(false)
@@ -76,8 +81,10 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
   const [maxRTM, setMaxRTM] = useState(1)
   const [showConnectedTeams, setShowConnectedTeams] = useState(false)
   const [showEndAuctionModal, setShowEndAuctionModal] = useState(false)
+  const [showEndRoomModal, setShowEndRoomModal] = useState(false)
   const [showTeamAnalysis, setShowTeamAnalysis] = useState(false)
   const [showUnsoldPlayers, setShowUnsoldPlayers] = useState(false)
+  const [showFinalResults, setShowFinalResults] = useState(false)
 
   const handleSetCurrentPlayer = (player: any) => {
     useAuctionStore.setState({ currentPlayer: player })
@@ -134,6 +141,33 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
     }, 500)
   }
 
+  const handleEndRoom = () => {
+    if (currentRoom) {
+      // Notify server to end room and disconnect all participants
+      socketClient.endRoom({ roomId: currentRoom.id })
+      
+      // End room locally
+      endRoom()
+      
+      // Reset auction and connections
+      resetAuction()
+      resetConnections()
+      
+      // Redirect to landing page
+      setTimeout(() => {
+        onBack()
+      }, 500)
+    }
+  }
+
+  // Connect to room when component mounts
+  useEffect(() => {
+    if (currentRoom && socketClient.isConnected()) {
+      socketClient.joinRoom(currentRoom.id, 'admin')
+      console.log(`Admin connected to room: ${currentRoom.id}`)
+    }
+  }, [currentRoom])
+
   return (
     <>
       {/* End Auction Modal */}
@@ -141,6 +175,13 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
         isOpen={showEndAuctionModal}
         onClose={() => setShowEndAuctionModal(false)}
         onConfirm={handleEndAuction}
+      />
+
+      {/* End Room Modal */}
+      <EndRoomModal
+        isOpen={showEndRoomModal}
+        onClose={() => setShowEndRoomModal(false)}
+        onConfirm={handleEndRoom}
       />
 
       {/* Squads View */}
@@ -369,6 +410,14 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
       {/* Team Analysis */}
       {showTeamAnalysis && (
         <TeamAnalysis onClose={() => setShowTeamAnalysis(false)} />
+      )}
+
+      {/* Final Results */}
+      {showFinalResults && (
+        <FinalResults 
+          onBack={() => setShowFinalResults(false)}
+          userRole="admin"
+        />
       )}
 
       {/* Animations - Now handled by global store */}
@@ -1058,7 +1107,7 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
               </motion.button>
             </div>
 
-            <div className="grid grid-cols-5 gap-4">
+            <div className="grid grid-cols-6 gap-4">
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -1129,6 +1178,32 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
                   🏁
                 </motion.div>
                 <span className="text-orange-400">END AUCTION</span>
+              </motion.button>
+
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowEndRoomModal(true)}
+                className="bg-gradient-to-r from-red-600/20 to-red-800/20 hover:from-red-600/30 hover:to-red-800/30 border-2 border-red-600/50 p-6 rounded-xl font-bold text-lg flex flex-col items-center gap-3 shadow-lg"
+                style={{
+                  boxShadow: '0 0 20px rgba(220, 38, 38, 0.4)'
+                }}
+              >
+                <motion.div
+                  animate={{ 
+                    scale: [1, 1.2, 1],
+                    rotate: [0, -10, 10, 0]
+                  }}
+                  transition={{ 
+                    duration: 2, 
+                    repeat: Infinity, 
+                    ease: "easeInOut" 
+                  }}
+                  className="text-2xl"
+                >
+                  🚪
+                </motion.div>
+                <span className="text-red-400">END ROOM</span>
               </motion.button>
 
               <motion.button
@@ -1487,6 +1562,29 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
           >
             <TrendingUp className="w-5 h-5" />
             Analyse Teams
+          </motion.button>
+
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setShowFinalResults(true)}
+            className="w-full bg-gradient-to-r from-yellow-500/20 to-gold-500/20 hover:from-yellow-500/30 hover:to-gold-500/30 border-2 border-yellow-500/50 p-4 rounded-xl font-bold flex items-center justify-center gap-2"
+          >
+            <motion.div
+              animate={{ 
+                rotate: [0, 360],
+                scale: [1, 1.1, 1]
+              }}
+              transition={{ 
+                duration: 2, 
+                repeat: Infinity, 
+                ease: "easeInOut" 
+              }}
+              className="text-2xl"
+            >
+              🏆
+            </motion.div>
+            Final Results & Rankings
           </motion.button>
 
           <motion.button

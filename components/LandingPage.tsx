@@ -30,6 +30,25 @@ export default function LandingPage({ onEnter }: LandingPageProps) {
       console.error('Failed to copy URL:', err)
     }
   }
+
+  const handleRoleSelect = (role: 'team' | 'spectate' | 'admin') => {
+    if (role === 'team') {
+      setShowTeamSelection(true)
+    } else if (role === 'admin') {
+      onEnter('admin')
+    } else if (role === 'spectate') {
+      onEnter('spectator')
+    }
+  }
+
+  const handleContinueAsAdmin = () => {
+    onEnter('admin')
+  }
+
+  const handleTeamSelect = (teamName: string) => {
+    setCurrentUser('team', teamName)
+    onEnter('bidder', teamName)
+  }
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
       {/* Animated background */}

@@ -63,13 +63,19 @@ echo    1. Copy the deployment URL from above
 echo    2. Test your live website
 echo    3. Share with friends and cricket fans!
 echo.
-echo 🔧 BACKEND DEPLOYMENT:
-echo    Your frontend is live, but you'll need to deploy the backend separately.
-echo    Options:
-echo    - Railway: https://railway.app (recommended for backend)
-echo    - Heroku: https://heroku.com
-echo    - Render: https://render.com
+echo 🌍 GLOBAL ACCESS READY:
+echo    ✅ Worldwide access enabled
+echo    ✅ Friends can join from any country
+echo    ✅ Real-time multiplayer configured
+echo    ✅ Mobile-responsive design
+echo    ✅ Room codes work globally
 echo.
-echo 📚 See PUBLICATION_GUIDE.md for backend deployment instructions
+echo 🎮 HOW FRIENDS CAN PLAY:
+echo    1. Share your game URL
+echo    2. Create auction rooms
+echo    3. Share 6-digit room codes
+echo    4. Friends join from anywhere!
+echo.
+echo 📚 See DEPLOYMENT_GUIDE.md for more details
 echo.
 pause

@@ -9,12 +9,13 @@ import RetentionPhase from '@/components/RetentionPhase'
 import TeamWelcomeIntro from '@/components/TeamWelcomeIntro'
 import FirstTimeIntro from '@/components/FirstTimeIntro'
 import WaitingRoom from '@/components/WaitingRoom'
+import FinalResults from '@/components/FinalResults'
 import GlobalUIComponents from '@/components/GlobalUIComponents'
 import { useAuctionStore } from '@/store/auctionStore'
 import { useRoomStore } from '@/store/roomStore'
 
 export default function Home() {
-  const [view, setView] = useState<'landing' | 'rooms' | 'auction' | 'admin' | 'spectator' | 'retention' | 'video' | 'waiting'>('landing')
+  const [view, setView] = useState<'landing' | 'rooms' | 'auction' | 'admin' | 'spectator' | 'retention' | 'video' | 'waiting' | 'results'>('landing')
   const [userRole, setUserRole] = useState<'admin' | 'team' | 'spectator' | null>(null)
   const [selectedTeam, setSelectedTeam] = useState<string | null>(null)
   const [showVideoIntro, setShowVideoIntro] = useState(false)
@@ -143,6 +144,19 @@ export default function Home() {
     return (
       <>
         <AuctionRoom onBack={() => setView('rooms')} selectedTeam={null} isSpectator={true} />
+        <GlobalUIComponents />
+      </>
+    )
+  }
+
+  if (view === 'results') {
+    return (
+      <>
+        <FinalResults 
+          onBack={() => setView('rooms')} 
+          userTeam={selectedTeam}
+          userRole={userRole}
+        />
         <GlobalUIComponents />
       </>
     )

@@ -2,12 +2,14 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Copy, Check, Users, Shield, Eye } from 'lucide-react'
+import { Copy, Check, Users, Shield, Eye, Share2 } from 'lucide-react'
+import ShareRoom from './ShareRoom'
 import { useRoomStore } from '@/store/roomStore'
 
 export default function RoomInfoBar() {
   const { currentRoom } = useRoomStore()
   const [copied, setCopied] = useState(false)
+  const [showShareModal, setShowShareModal] = useState(false)
 
   if (!currentRoom) return null
 
@@ -22,11 +24,14 @@ export default function RoomInfoBar() {
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="glass-effect p-4 rounded-2xl mb-6"
-    >
+    <>
+      <ShareRoom show={showShareModal} onClose={() => setShowShareModal(false)} />
+      
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="glass-effect p-4 rounded-2xl mb-6"
+      >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
@@ -40,6 +45,15 @@ export default function RoomInfoBar() {
                 className="text-gold-400 hover:text-gold-300 transition-colors"
               >
                 {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setShowShareModal(true)}
+                className="text-blue-400 hover:text-blue-300 transition-colors ml-2"
+                title="Share with friends worldwide"
+              >
+                <Share2 className="w-4 h-4" />
               </motion.button>
             </div>
           </div>
@@ -81,6 +95,7 @@ export default function RoomInfoBar() {
           Room code copied!
         </motion.div>
       )}
-    </motion.div>
+      </motion.div>
+    </>
   )
 }

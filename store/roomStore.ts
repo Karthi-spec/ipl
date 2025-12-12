@@ -46,6 +46,7 @@ interface RoomState {
   setCurrentUser: (user: RoomParticipant) => void
   fetchRooms: () => Promise<void>
   deleteRoom: (roomId: string) => void
+  endRoom: () => void
 }
 
 export const useRoomStore = create<RoomState>((set, get) => ({
@@ -210,5 +211,23 @@ export const useRoomStore = create<RoomState>((set, get) => ({
     const rooms = JSON.parse(localStorage.getItem('auctionRooms') || '[]')
     const filteredRooms = rooms.filter((r: Room) => r.id !== roomId)
     localStorage.setItem('auctionRooms', JSON.stringify(filteredRooms))
+  },
+
+  endRoom: () => {
+    const { currentRoom } = get()
+    if (currentRoom) {
+      // Remove room from available rooms and clear current room
+      set(state => ({
+        availableRooms: state.availableRooms.filter(r => r.id !== currentRoom.id),
+        currentRoom: null,
+        currentUser: null,
+        participants: []
+      }))
+
+      // Update localStorage
+      const rooms = JSON.parse(localStorage.getItem('auctionRooms') || '[]')
+      const filteredRooms = rooms.filter((r: Room) => r.id !== currentRoom.id)
+      localStorage.setItem('auctionRooms', JSON.stringify(filteredRooms))
+    }
   }
 }))
