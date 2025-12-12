@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, SkipForward, Play } from 'lucide-react'
 import { TeamIntroTracker } from '@/utils/teamIntroTracker'
+import { getImagePath } from '@/utils/imagePaths'
 
 interface TeamWelcomeIntroProps {
   teamName: string
@@ -154,7 +155,7 @@ export default function TeamWelcomeIntro({ teamName, onComplete, show }: TeamWel
                 }}
               >
                 <img
-                  src={team.logo}
+                  src={getImagePath(team.logo)}
                   alt={teamName}
                   className="w-20 h-20 md:w-32 md:h-32 object-contain"
                 />
@@ -246,7 +247,7 @@ export default function TeamWelcomeIntro({ teamName, onComplete, show }: TeamWel
           >
             <video
               ref={videoRef}
-              src={videoSrc}
+              src={getImagePath(videoSrc)}
               autoPlay
               onEnded={handleVideoEnd}
               className="w-full h-full object-cover"

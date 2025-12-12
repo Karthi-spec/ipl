@@ -4,6 +4,7 @@ import React from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Users, Wifi } from 'lucide-react'
 import { useConnectedClients } from '@/hooks/useConnectedClients'
+import { getTeamLogo as getTeamLogoPath } from '@/utils/imagePaths'
 
 export default function ConnectedTeamsList() {
   const { getConnectedTeams, stats } = useConnectedClients()
@@ -25,21 +26,7 @@ export default function ConnectedTeamsList() {
     return teamColors[teamName || ''] || '#6B7280'
   }
 
-  const getTeamLogo = (teamName?: string) => {
-    const teamLogos: { [key: string]: string } = {
-      'Mumbai Indians': '/logos/Original Mumbai Indians PNG-SVG File Download Free Download.png',
-      'Chennai Super Kings': '/logos/Original Chennai Super Fun Logo PNG - SVG File Download Free Download.png',
-      'Royal Challengers Bangalore': '/logos/rcb-logo-png_seeklogo-531612.png',
-      'Kolkata Knight Riders': '/logos/Original Kolkata Knight Riders PNG-SVG File Download Free Download.png',
-      'Delhi Capitals': '/logos/delhi-capitals.png',
-      'Punjab Kings': '/logos/Original Punjab Kings PNG-SVG File Download Free Download.png',
-      'Rajasthan Royals': '/logos/Original Rajasthan Royals Logo PNG-SVG File Download Free Download.png',
-      'Sunrisers Hyderabad': '/logos/Original Sunrisers Hyderabad PNG-SVG File Download Free Download.png',
-      'Gujarat Titans': '/logos/Original Gujarat Titans Logo PNG-SVG File Download Free Download.png',
-      'Lucknow Super Giants': '/logos/Original Lucknow Super Giants PNG-SVG File Download Free Download.png'
-    }
-    return teamLogos[teamName || ''] || null
-  }
+
 
   return (
     <div className="fixed bottom-4 right-4 z-40 max-w-sm">
@@ -94,9 +81,9 @@ export default function ConnectedTeamsList() {
                     className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden bg-white border-2"
                     style={{ borderColor: getTeamColor(team.teamName) }}
                   >
-                    {getTeamLogo(team.teamName) ? (
+                    {getTeamLogoPath(team.teamName) ? (
                       <img 
-                        src={getTeamLogo(team.teamName)!} 
+                        src={getTeamLogoPath(team.teamName)!} 
                         alt={team.teamName} 
                         className="w-6 h-6 object-contain"
                       />

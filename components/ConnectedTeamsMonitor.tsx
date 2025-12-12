@@ -4,6 +4,7 @@ import React from 'react'
 import { motion } from 'framer-motion'
 import { Users, Wifi, WifiOff, Eye, Shield, Clock } from 'lucide-react'
 import { useConnectedClients } from '@/hooks/useConnectedClients'
+import { getTeamLogo as getTeamLogoPath } from '@/utils/imagePaths'
 
 interface ConnectedTeamsMonitorProps {
   show: boolean
@@ -23,11 +24,11 @@ export default function ConnectedTeamsMonitor({ show, onClose }: ConnectedTeamsM
   }
 
   const getClientIcon = (client: any) => {
-    if (client.type === 'team' && client.teamName && getTeamLogo(client.teamName)) {
+    if (client.type === 'team' && client.teamName && getTeamLogoPath(client.teamName)) {
       return (
         <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center overflow-hidden border-2" style={{ borderColor: getTeamColor(client.teamName) }}>
           <img 
-            src={getTeamLogo(client.teamName)!} 
+            src={getTeamLogoPath(client.teamName)!} 
             alt={client.teamName} 
             className="w-6 h-6 object-contain"
           />
@@ -59,21 +60,7 @@ export default function ConnectedTeamsMonitor({ show, onClose }: ConnectedTeamsM
     return teamColors[teamName || ''] || '#6B7280'
   }
 
-  const getTeamLogo = (teamName?: string) => {
-    const teamLogos: { [key: string]: string } = {
-      'Mumbai Indians': '/logos/Original Mumbai Indians PNG-SVG File Download Free Download.png',
-      'Chennai Super Kings': '/logos/Original Chennai Super Fun Logo PNG - SVG File Download Free Download.png',
-      'Royal Challengers Bangalore': '/logos/rcb-logo-png_seeklogo-531612.png',
-      'Kolkata Knight Riders': '/logos/Original Kolkata Knight Riders PNG-SVG File Download Free Download.png',
-      'Delhi Capitals': '/logos/delhi-capitals.png',
-      'Punjab Kings': '/logos/Original Punjab Kings PNG-SVG File Download Free Download.png',
-      'Rajasthan Royals': '/logos/Original Rajasthan Royals Logo PNG-SVG File Download Free Download.png',
-      'Sunrisers Hyderabad': '/logos/Original Sunrisers Hyderabad PNG-SVG File Download Free Download.png',
-      'Gujarat Titans': '/logos/Original Gujarat Titans Logo PNG-SVG File Download Free Download.png',
-      'Lucknow Super Giants': '/logos/Original Lucknow Super Giants PNG-SVG File Download Free Download.png'
-    }
-    return teamLogos[teamName || ''] || null
-  }
+
 
   if (!show) return null
 
@@ -178,9 +165,9 @@ export default function ConnectedTeamsMonitor({ show, onClose }: ConnectedTeamsM
                           border: `2px solid ${getTeamColor(client.teamName)}`
                         }}
                       >
-                        {getTeamLogo(client.teamName) ? (
+                        {getTeamLogoPath(client.teamName) ? (
                           <img 
-                            src={getTeamLogo(client.teamName)!} 
+                            src={getTeamLogoPath(client.teamName)!} 
                             alt={client.teamName} 
                             className="w-10 h-10 object-contain"
                           />

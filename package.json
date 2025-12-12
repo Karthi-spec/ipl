@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "export": "next build",
+    "build:github": "next build",
     "server:dev": "cd server && npm run dev",
     "server:start": "cd server && npm start",
     "deploy": "npm run build && docker-compose up -d --build",

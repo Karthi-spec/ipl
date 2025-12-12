@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { Users, Copy, Check } from 'lucide-react'
 import { useAuctionStore } from '@/store/auctionStore'
 import { useConnectedClients } from '@/hooks/useConnectedClients'
+import { getImagePath } from '@/utils/imagePaths'
 
 interface TeamSelectionModalProps {
   onTeamSelect: (teamName: string) => void
@@ -130,7 +131,7 @@ export default function TeamSelectionModal({ onTeamSelect, onClose }: TeamSelect
                   }}
                 >
                   <div className="flex flex-col items-center gap-3">
-                    <img src={team.logo} alt={team.name} className="w-16 h-16 object-contain" />
+                    <img src={getImagePath(team.logo)} alt={team.name} className="w-16 h-16 object-contain" />
                     <div className="font-bold text-lg">{team.name}</div>
                     {isJoined && (
                       <div className="text-xs text-gray-400">Already Joined</div>
@@ -173,7 +174,7 @@ export default function TeamSelectionModal({ onTeamSelect, onClose }: TeamSelect
             <div className="space-y-1">
               {teams.filter(team => isTeamConnected(team.name)).map((team) => (
                 <div key={team.id} className="text-sm flex items-center gap-2">
-                  <img src={team.logo} alt={team.name} className="w-4 h-4 object-contain" />
+                  <img src={getImagePath(team.logo)} alt={team.name} className="w-4 h-4 object-contain" />
                   • {team.name} joined
                 </div>
               ))}
