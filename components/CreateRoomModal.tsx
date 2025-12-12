@@ -2,14 +2,12 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { X, Users, Lock, Globe, Trophy, Settings, Shield, Eye } from 'lucide-react'
+import { X, Lock, Globe, Trophy } from 'lucide-react'
 import { useRoomStore } from '@/store/roomStore'
-import { useAuctionStore } from '@/store/auctionStore'
-import { getImagePath } from '@/utils/imagePaths'
 
 interface CreateRoomModalProps {
   onClose: () => void
-  onRoomCreated: (roomId: string, role: 'admin' | 'team' | 'spectator', teamName?: string) => void
+  onRoomCreated: (roomId: string) => void
 }
 
 export default function CreateRoomModal({ onClose, onRoomCreated }: CreateRoomModalProps) {
@@ -19,12 +17,10 @@ export default function CreateRoomModal({ onClose, onRoomCreated }: CreateRoomMo
   const [isPrivate, setIsPrivate] = useState(false)
   const [password, setPassword] = useState('')
   const [creatorName, setCreatorName] = useState('')
-  const [creatorRole, setCreatorRole] = useState<'admin' | 'team' | 'spectator'>('admin')
-  const [selectedTeam, setSelectedTeam] = useState('')
+
   const [isCreating, setIsCreating] = useState(false)
   
   const { createRoom } = useRoomStore()
-  const { teams } = useAuctionStore()
 
   const handleCreate = async () => {
     if (!roomName.trim() || !creatorName.trim()) {
@@ -34,11 +30,6 @@ export default function CreateRoomModal({ onClose, onRoomCreated }: CreateRoomMo
 
     if (isPrivate && !password.trim()) {
       alert('Please set a password for private room')
-      return
-    }
-
-    if (creatorRole === 'team' && !selectedTeam) {
-      alert('Please select a team')
       return
     }
 
@@ -56,8 +47,8 @@ export default function CreateRoomModal({ onClose, onRoomCreated }: CreateRoomMo
         description: description.trim() || undefined
       })
 
-      // Auto-join the room with selected role
-      onRoomCreated(roomId, creatorRole, creatorRole === 'team' ? selectedTeam : undefined)
+      // Just pass the roomId - role selection happens after
+      onRoomCreated(roomId)
     } catch (error) {
       console.error('Failed to create room:', error)
       alert('Failed to create room. Please try again.')
@@ -155,97 +146,7 @@ export default function CreateRoomModal({ onClose, onRoomCreated }: CreateRoomMo
             />
           )}
 
-          {/* Role Selection */}
-          <div className="space-y-3">
-            <label className="block text-sm font-bold text-gray-300">
-              Join as:
-            </label>
-            
-            <div className="grid grid-cols-3 gap-2">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setCreatorRole('admin')}
-                className={`p-3 rounded-xl border-2 transition-all ${
-                  creatorRole === 'admin'
-                    ? 'border-red-400 bg-red-500/20 text-red-400'
-                    : 'border-white/10 bg-white/5 text-gray-400 hover:border-white/30'
-                }`}
-              >
-                <Shield className="w-5 h-5 mx-auto mb-1" />
-                <div className="text-xs font-bold">Admin</div>
-              </motion.button>
 
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setCreatorRole('team')}
-                className={`p-3 rounded-xl border-2 transition-all ${
-                  creatorRole === 'team'
-                    ? 'border-blue-400 bg-blue-500/20 text-blue-400'
-                    : 'border-white/10 bg-white/5 text-gray-400 hover:border-white/30'
-                }`}
-              >
-                <Users className="w-5 h-5 mx-auto mb-1" />
-                <div className="text-xs font-bold">Team</div>
-              </motion.button>
-
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setCreatorRole('spectator')}
-                className={`p-3 rounded-xl border-2 transition-all ${
-                  creatorRole === 'spectator'
-                    ? 'border-gray-400 bg-gray-500/20 text-gray-400'
-                    : 'border-white/10 bg-white/5 text-gray-400 hover:border-white/30'
-                }`}
-              >
-                <Eye className="w-5 h-5 mx-auto mb-1" />
-                <div className="text-xs font-bold">Watch</div>
-              </motion.button>
-            </div>
-          </div>
-
-          {/* Team Selection */}
-          {creatorRole === 'team' && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              className="space-y-3"
-            >
-              <label className="block text-sm font-bold text-gray-300">
-                Select Team:
-              </label>
-              <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
-                {teams.map((team) => (
-                  <motion.button
-                    key={team.id}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => setSelectedTeam(team.name)}
-                    className={`p-3 rounded-xl border-2 transition-all ${
-                      selectedTeam === team.name
-                        ? 'border-gold-400 bg-gold-500/20'
-                        : 'border-white/10 bg-white/5 hover:border-white/30'
-                    }`}
-                    style={{
-                      borderColor: selectedTeam === team.name ? '#FFD700' : team.color,
-                      background: selectedTeam === team.name
-                        ? 'rgba(255, 215, 0, 0.2)'
-                        : `${team.color}20`,
-                    }}
-                  >
-                    <img 
-                      src={getImagePath(team.logo)} 
-                      alt={team.name} 
-                      className="w-8 h-8 object-contain mx-auto mb-1" 
-                    />
-                    <div className="text-xs font-bold text-white">{team.name.split(' ').pop()}</div>
-                  </motion.button>
-                ))}
-              </div>
-            </motion.div>
-          )}
         </div>
 
         {/* Action Buttons */}

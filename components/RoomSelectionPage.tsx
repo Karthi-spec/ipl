@@ -19,17 +19,10 @@ export default function RoomSelectionPage({ onRoomJoined }: RoomSelectionPagePro
     setShowCreateModal(true)
   }
 
-  const handleRoomCreated = async (roomId: string, role: 'admin' | 'team' | 'spectator', teamName?: string) => {
+  const handleRoomCreated = (roomId: string) => {
     setShowCreateModal(false)
-    
-    try {
-      // Auto-join the created room with selected role
-      const { joinRoomWithRole } = useRoomStore.getState()
-      await joinRoomWithRole(roomId, role)
-      onRoomJoined(roomId)
-    } catch (error) {
-      alert(error instanceof Error ? error.message : 'Failed to join room')
-    }
+    // Join the created room - role selection will happen in the room
+    onRoomJoined(roomId)
   }
 
   const handleJoinRoom = async (roomId: string, password?: string) => {
