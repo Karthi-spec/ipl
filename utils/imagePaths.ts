@@ -1,5 +1,10 @@
 // Utility function to handle image paths for both local and GitHub Pages deployment
 export const getImagePath = (path: string): string => {
+  // For local development, just return the path as-is
+  if (process.env.NODE_ENV === 'development') {
+    return path;
+  }
+  
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
   
   // If path already starts with basePath, don't add it again
