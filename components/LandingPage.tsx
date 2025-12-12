@@ -17,32 +17,8 @@ export default function LandingPage({ onEnter }: LandingPageProps) {
   const [copied, setCopied] = useState(false)
   const { setCurrentUser } = useConnectionStore()
 
-  const handleCreate = () => {
-    setShowRoleSelection(true)
-  }
-
-  const handleRoleSelect = (role: 'team' | 'admin' | 'spectate') => {
-    setShowRoleSelection(false)
-    if (role === 'admin') {
-      setShowShareUrl(true)
-    } else if (role === 'spectate') {
-      setCurrentUser('spectator')
-      onEnter('spectator')
-    } else {
-      setShowTeamSelection(true)
-    }
-  }
-
-  const handleTeamSelect = (teamName: string) => {
-    setShowTeamSelection(false)
-    setCurrentUser('team', teamName)
-    onEnter('bidder', teamName)
-  }
-
-  const handleContinueAsAdmin = () => {
-    setShowShareUrl(false)
-    setCurrentUser('admin')
-    onEnter('admin')
+  const handleEnterAuction = () => {
+    onEnter('bidder') // This will redirect to room selection
   }
 
   const handleCopyUrl = async () => {
@@ -233,12 +209,12 @@ export default function LandingPage({ onEnter }: LandingPageProps) {
               transition={{ delay: 0.7 }}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={handleCreate}
+              onClick={handleEnterAuction}
               className="glass-effect p-12 rounded-3xl hover:bg-white/10 transition-all group max-w-md"
             >
               <Gavel className="w-16 h-16 text-gold-400 mb-6 mx-auto group-hover:animate-pulse" />
-              <h3 className="text-3xl font-bold mb-4">CREATE</h3>
-              <p className="text-gray-400 text-lg">Start your auction experience</p>
+              <h3 className="text-3xl font-bold mb-4">ENTER AUCTION</h3>
+              <p className="text-gray-400 text-lg">Create or join auction rooms</p>
             </motion.button>
           </div>
         ) : showRoleSelection && !showShareUrl ? (

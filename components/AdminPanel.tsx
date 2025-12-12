@@ -516,6 +516,17 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
               </button>
               <button
                 onClick={() => {
+                  // Skip retention phase - mark as complete and start auction directly
+                  useAuctionStore.getState().updateTeamLimits(0, 0)
+                  useAuctionStore.getState().completeRetentionPhase()
+                  setShowAuctionConfig(false)
+                }}
+                className="flex-1 bg-green-500/20 hover:bg-green-500/30 border-2 border-green-500/50 p-4 rounded-xl font-bold"
+              >
+                No Retention - Start Auction
+              </button>
+              <button
+                onClick={() => {
                   // Apply configuration and start retention phase
                   useAuctionStore.getState().updateTeamLimits(maxRetentions, maxRTM)
                   startRetentionPhase()

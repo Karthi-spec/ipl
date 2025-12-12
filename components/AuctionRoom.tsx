@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, TrendingUp, Users, Eye, X } from 'lucide-react'
 import { useAuctionStore } from '@/store/auctionStore'
+import { useRoomStore } from '@/store/roomStore'
 import PlayerCard from './PlayerCard'
 import BiddingPanel from './BiddingPanel'
 import TeamsList from './TeamsList'
@@ -17,6 +18,8 @@ import TeamsConnectionBar from './TeamsConnectionBar'
 import TeamAnalysisDisplay from './TeamAnalysisDisplay'
 import AuctionTimer from './AuctionTimer'
 import UserConnectionStatus from './UserConnectionStatus'
+import RoomTeamSelectionModal from './RoomTeamSelectionModal'
+import RoomInfoBar from './RoomInfoBar'
 import { socketClient } from '@/utils/socketClient'
 import { getPlayerRating } from '@/utils/playerRatings'
 
@@ -25,9 +28,10 @@ interface AuctionRoomProps {
   onBack: () => void
   selectedTeam?: string | null
   isSpectator?: boolean
+  onRoleSelect?: (role: 'admin' | 'team' | 'spectator', teamName?: string) => void
 }
 
-export default function AuctionRoom({ onBack, selectedTeam: userSelectedTeam, isSpectator = false }: AuctionRoomProps) {
+export default function AuctionRoom({ onBack, selectedTeam: userSelectedTeam, isSpectator = false, onRoleSelect }: AuctionRoomProps) {
   const { 
     currentPlayer, 
     teams, 
@@ -43,11 +47,44 @@ export default function AuctionRoom({ onBack, selectedTeam: userSelectedTeam, is
     setShowRetainedAnimation,
     showUnsoldAnimation,
     unsoldAnimationData,
-    setShowUnsoldAnimation
+    setShowUnsoldAnimation,
+    limitsConfigured,
+    retentionPhaseActive,
+    retentionPhaseComplete
   } = useAuctionStore()
+  const { currentRoom } = useRoomStore()
   const [selectedTeam, setSelectedTeam] = useState<string>(userSelectedTeam || '')
+  const [userRole, setUserRole] = useState<'admin' | 'team' | 'spectator' | null>(null)
+  const [showRoleSelection, setShowRoleSelection] = useState<boolean>(!userSelectedTeam && !isSpectator)
   const [showSquadManager, setShowSquadManager] = useState<boolean>(false)
   const [showTeamAnalysis, setShowTeamAnalysis] = useState<boolean>(false)
+
+  const handleRoleSelect = async (role: 'admin' | 'team' | 'spectator', teamName?: string) => {
+    const { joinRoomWithRole, currentRoom } = useRoomStore.getState()
+    
+    if (!currentRoom) return
+    
+    try {
+      const result = await joinRoomWithRole(currentRoom.id, role)
+      
+      // Use the actual role returned (in case admin was converted to spectator)
+      setUserRole(result.actualRole)
+      setShowRoleSelection(false)
+      
+      // Show message if role was changed
+      if (role === 'admin' && result.actualRole === 'spectator') {
+        alert('Admin slot was already taken - you have joined as a spectator instead')
+      }
+      
+      // Call parent handler to navigate to appropriate view
+      if (onRoleSelect) {
+        onRoleSelect(result.actualRole, teamName)
+      }
+      
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Failed to join with selected role')
+    }
+  }
   const [teamAnalysisData, setTeamAnalysisData] = useState<any[]>([])
 
   // Lock team selection if user joined as specific team
@@ -140,6 +177,9 @@ export default function AuctionRoom({ onBack, selectedTeam: userSelectedTeam, is
       />
 
       <div className="min-h-screen p-4 md:p-8">
+      {/* Room Info Bar */}
+      <RoomInfoBar />
+
       {/* Header */}
       <motion.div
         initial={{ y: -20, opacity: 0 }}
@@ -262,11 +302,30 @@ export default function AuctionRoom({ onBack, selectedTeam: userSelectedTeam, is
 
           {/* Bidding Panel - Hidden for Spectators */}
           {!isSpectator && (
-            <BiddingPanel
-              selectedTeam={selectedTeam}
-              onTeamSelect={setSelectedTeam}
-              isTeamLocked={!!userSelectedTeam}
-            />
+            <>
+              {!limitsConfigured ? (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="glass-effect p-6 rounded-2xl border-2 border-yellow-500/50 text-center"
+                >
+                  <div className="animate-pulse text-yellow-400 mb-2 text-2xl">⏳</div>
+                  <h3 className="text-xl font-bold text-yellow-400 mb-2">Waiting for Admin</h3>
+                  <p className="text-gray-300 mb-2">
+                    The admin is configuring the auction settings...
+                  </p>
+                  <p className="text-sm text-gray-400">
+                    You'll be able to bid once the auction starts!
+                  </p>
+                </motion.div>
+              ) : (
+                <BiddingPanel
+                  selectedTeam={selectedTeam}
+                  onTeamSelect={setSelectedTeam}
+                  isTeamLocked={!!userSelectedTeam}
+                />
+              )}
+            </>
           )}
 
           {/* Spectator Notice */}
@@ -280,9 +339,21 @@ export default function AuctionRoom({ onBack, selectedTeam: userSelectedTeam, is
                 <Eye className="w-6 h-6 text-purple-400" />
                 <h3 className="text-xl font-bold text-purple-400">Spectator Mode</h3>
               </div>
-              <p className="text-gray-300">
-                You're watching the auction live. You can see all bidding activity but cannot place bids.
-              </p>
+              {!limitsConfigured ? (
+                <div className="text-center py-4">
+                  <div className="animate-pulse text-yellow-400 mb-2">⏳</div>
+                  <p className="text-gray-300 mb-2">
+                    Waiting for admin to configure the auction...
+                  </p>
+                  <p className="text-sm text-gray-400">
+                    The admin needs to set up retention rules or start the auction directly.
+                  </p>
+                </div>
+              ) : (
+                <p className="text-gray-300">
+                  You're watching the auction live. You can see all bidding activity but cannot place bids.
+                </p>
+              )}
             </motion.div>
           )}
 
@@ -350,6 +421,14 @@ export default function AuctionRoom({ onBack, selectedTeam: userSelectedTeam, is
 
     {/* User Connection Status */}
     <UserConnectionStatus />
+
+    {/* Room Role Selection Modal */}
+    {showRoleSelection && (
+      <RoomTeamSelectionModal
+        onRoleSelect={handleRoleSelect}
+        onClose={() => setShowRoleSelection(false)}
+      />
+    )}
 
     </>
   )

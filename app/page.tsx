@@ -4,19 +4,23 @@ import { useState, useEffect } from 'react'
 import AuctionRoom from '@/components/AuctionRoom'
 import AdminPanel from '@/components/AdminPanel'
 import LandingPage from '@/components/LandingPage'
+import RoomSelectionPage from '@/components/RoomSelectionPage'
 import RetentionPhase from '@/components/RetentionPhase'
 import TeamWelcomeIntro from '@/components/TeamWelcomeIntro'
 import FirstTimeIntro from '@/components/FirstTimeIntro'
+import WaitingRoom from '@/components/WaitingRoom'
 import GlobalUIComponents from '@/components/GlobalUIComponents'
 import { useAuctionStore } from '@/store/auctionStore'
+import { useRoomStore } from '@/store/roomStore'
 
 export default function Home() {
-  const [view, setView] = useState<'landing' | 'auction' | 'admin' | 'spectator' | 'retention' | 'video'>('landing')
-  const [userRole, setUserRole] = useState<'bidder' | 'admin' | 'spectator' | null>(null)
+  const [view, setView] = useState<'landing' | 'rooms' | 'auction' | 'admin' | 'spectator' | 'retention' | 'video' | 'waiting'>('landing')
+  const [userRole, setUserRole] = useState<'admin' | 'team' | 'spectator' | null>(null)
   const [selectedTeam, setSelectedTeam] = useState<string | null>(null)
   const [showVideoIntro, setShowVideoIntro] = useState(false)
   const [showFirstTimeIntro, setShowFirstTimeIntro] = useState(false)
   const { retentionPhaseActive, limitsConfigured } = useAuctionStore()
+  const { currentRoom } = useRoomStore()
 
   // Check if this is the first time visiting
   useEffect(() => {
@@ -27,30 +31,36 @@ export default function Home() {
   }, [])
 
   const handleEnter = (role: 'bidder' | 'admin' | 'spectator', teamName?: string) => {
+    // First, go to room selection
+    setView('rooms')
+  }
+
+  const handleRoomJoined = (roomId: string) => {
+    // After joining a room, show role selection within the room
+    setView('auction')
+  }
+
+  const handleRoleSelected = (role: 'admin' | 'team' | 'spectator', teamName?: string) => {
     setUserRole(role)
-    if (teamName) {
-      setSelectedTeam(teamName)
-    }
     
-    if (role === 'admin') {
-      setView('admin')
-    } else if (role === 'spectator') {
-      setView('spectator')
-    } else if (role === 'bidder' && teamName) {
-      // Show video intro for team members
+    if (role === 'team' && teamName) {
+      setSelectedTeam(teamName)
+      // Show team intro video first
       setShowVideoIntro(true)
       setView('video')
+    } else if (role === 'admin') {
+      // Admin goes to admin panel
+      setView('admin')
+    } else {
+      // Spectators wait for auction to start
+      setView('waiting')
     }
   }
 
   const handleVideoComplete = () => {
     setShowVideoIntro(false)
-    // After video, check if retention phase is active
-    if (retentionPhaseActive) {
-      setView('retention')
-    } else {
-      setView('auction')
-    }
+    // After video, teams wait for admin to configure retention or start auction
+    setView('waiting')
   }
 
   const handleFirstTimeIntroComplete = () => {
@@ -65,6 +75,15 @@ export default function Home() {
           show={showFirstTimeIntro} 
           onComplete={handleFirstTimeIntroComplete} 
         />
+        <GlobalUIComponents />
+      </>
+    )
+  }
+
+  if (view === 'rooms') {
+    return (
+      <>
+        <RoomSelectionPage onRoomJoined={handleRoomJoined} />
         <GlobalUIComponents />
       </>
     )
@@ -92,10 +111,38 @@ export default function Home() {
     )
   }
 
+  if (view === 'video') {
+    return (
+      <>
+        <TeamWelcomeIntro
+          teamName={selectedTeam || ''}
+          onComplete={handleVideoComplete}
+          show={showVideoIntro}
+        />
+        <GlobalUIComponents />
+      </>
+    )
+  }
+
+  if (view === 'waiting') {
+    return (
+      <>
+        <WaitingRoom 
+          userRole={userRole}
+          selectedTeam={selectedTeam}
+          onRetentionStart={() => setView('retention')}
+          onAuctionStart={() => setView('auction')}
+          onBack={() => setView('rooms')}
+        />
+        <GlobalUIComponents />
+      </>
+    )
+  }
+
   if (view === 'spectator') {
     return (
       <>
-        <AuctionRoom onBack={() => setView('landing')} selectedTeam={null} isSpectator={true} />
+        <AuctionRoom onBack={() => setView('rooms')} selectedTeam={null} isSpectator={true} />
         <GlobalUIComponents />
       </>
     )
@@ -103,7 +150,12 @@ export default function Home() {
 
   return (
     <>
-      <AuctionRoom onBack={() => setView('landing')} selectedTeam={selectedTeam} isSpectator={false} />
+      <AuctionRoom 
+        onBack={() => setView('rooms')} 
+        selectedTeam={selectedTeam} 
+        isSpectator={userRole === 'spectator'}
+        onRoleSelect={handleRoleSelected}
+      />
       
       {/* Team Welcome Intro */}
       <TeamWelcomeIntro
